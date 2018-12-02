@@ -1,0 +1,54 @@
+version: 2.1
+description: orb for my chrome extension development
+
+commands:
+  npm_install:
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+          - v1-dependencies-{{ checksum "package.json" }}
+          # fallback to using the latest cache if no exact match is found
+          - v1-dependencies-
+
+      - run: npm install
+
+      - save_cache:
+          key: v1-dependencies-{{ checksum "package.json" }}
+          paths:
+            - "./node_modules"
+  run_test:
+    steps:
+      - run: npm test
+
+  run_npm_outdated:
+    steps:
+      - run:
+          name: show outdated npm packages
+          command: npm outdated || echo "succeed command focely" # TODO: optional
+      # TODO: create PR optional
+
+  run_npm-check-updates:
+    steps:
+      - run: sudo npm install -g npm-check-updates
+      - run:
+          name: show upgrade npm packages regardless of version lock
+          command: /usr/local/bin/npm-check-updates
+      # TODO: create PR optional
+
+jobs:
+  test:
+    docker:
+      - image: circleci/node:11.3.0 # TODO: optional
+    steps:
+      - npm_install
+      - run_test
+
+  check_outdated_npm_package:
+    docker:
+      - image: circleci/node:11.3.0 # TODO: optional
+    steps:
+      - npm_install
+      # TODO: optinal and/or
+      - run_npm_outdated
+      - run_npm-check-updates
